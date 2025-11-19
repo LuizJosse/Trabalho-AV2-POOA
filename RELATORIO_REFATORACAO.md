@@ -1,86 +1,37 @@
 # Relatório de Refatoração - FiadoPay
 
-**Data:** 18 de Novembro de 2025  
-**Autor:** Lucas Benício  
-**Objetivo:** Refatorar o FiadoPay com foco em engenharia avançada (Anotações, Reflexão e Threads)
+**Data:** 18 de Novembro de 2025
 
 ---
 
-## 1. Resumo Executivo
+## Resumo Executivo
 
-Realizei a refatoração do FiadoPay com sucesso, implementando os três pilares solicitados pelo professor:
+Implementamos com sucesso a refatoração do FiadoPay com os três pilares solicitados:
 
-✅ **Anotações Customizadas** - Criei 3 anotações para marcar comportamentos específicos  
-✅ **Reflexão** - Implementei validação dinâmica de métodos de pagamento e anti-fraude  
-✅ **Threads/ExecutorService** - Substitui `Thread.sleep()` e `CompletableFuture` por `ExecutorService` profissional  
+1. **Anotações Customizadas** - 3 anotações para marcar comportamentos específicos
+2. **Reflexão** - Validação dinâmica de métodos de pagamento e anti-fraude
+3. **Threads Profissionais** - ExecutorService substituindo `Thread.sleep()` bloqueante
 
-**Contrato de API mantido:** Todas as rotas continuam funcionando sem alterações
+**Resultado:** Todas as rotas da API continuam funcionando sem alterações (sem breaking changes)
 
 ---
 
-## 2. Arquivos Criados
+## Arquivos Criados
 
-### 2.1 Anotações Customizadas
+### 2.1 Anotações
 
-Criei três anotações customizadas para melhorar a rastreabilidade e validação do código:
-
-#### `@PaymentMethod`
-- **Localização:** `src/main/java/edu/ucsal/fiadopay/annotation/PaymentMethod.java`
-- **Propósito:** Marquei campos que representam métodos de pagamento válidos
-- **Atributos:**
-  - `type`: Tipo do método (CARD, PIX, DEBIT, BOLETO)
-  - `description`: Descrição legível
-  - `maxInstallments`: Número máximo de parcelas permitidas
-
-#### `@AntiFraud`
-- **Localização:** `src/main/java/edu/ucsal/fiadopay/annotation/AntiFraud.java`
-- **Propósito:** Marquei métodos que implementam validações anti-fraude
-- **Atributos:**
-  - `name`: Nome da regra (ex: "HighAmount", "SuspiciousAmount")
-  - `threshold`: Valor limite para a regra
-  - `description`: Descrição da validação
-
-#### `@WebhookSink`
-- **Localização:** `src/main/java/edu/ucsal/fiadopay/annotation/WebhookSink.java`
-- **Propósito:** Marquei métodos que disparam eventos de webhook
-- **Atributos:**
-  - `eventType`: Tipo do evento (ex: "payment.updated")
-  - `description`: Descrição do evento
+- **@PaymentMethod** (`annotation/PaymentMethod.java`) - Marca métodos de pagamento com tipo e limite de parcelas
+- **@AntiFraud** (`annotation/AntiFraud.java`) - Marca regras anti-fraude com threshold
+- **@WebhookSink** (`annotation/WebhookSink.java`) - Marca métodos que disparam webhooks
 
 ### 2.2 Serviços com Reflexão
 
-Implementei dois serviços que usam reflexão para validação dinâmica:
-
-#### `PaymentMethodValidator.java`
-- **Localização:** `src/main/java/edu/ucsal/fiadopay/service/PaymentMethodValidator.java`
-- **O que fiz:**
-  - Criei um validador que usa reflexão para ler anotações `@PaymentMethod`
-  - Implementei validação se método de pagamento é suportado
-  - Implementei validação se número de parcelas é permitido para o método
-  - Métodos principais:
-    - `isMethodSupported(String method)` - Verifica suporte
-    - `isInstallmentsValid(String method, int installments)` - Valida parcelas
-    - `getMethodInfo(String method)` - Obtém informações do método
-    - `getAllSupportedMethods()` - Lista todos os métodos
-
-#### `AntiFraudService.java`
-- **Localização:** `src/main/java/edu/ucsal/fiadopay/service/AntiFraudService.java`
-- **O que fiz:**
-  - Implementei regras anti-fraude usando anotação `@AntiFraud`
-  - Criei três regras de validação:
-    - Valor alto (>5000) - Alerta mas permite
-    - Valor suspeito (>10000) - Rejeita
-    - Limite de parcelas (>12) - Rejeita
-  - Métodos principais:
-    - `validatePayment(PaymentRequest)` - Valida pagamento contra todas as regras
-    - `checkHighAmount(BigDecimal)` - Alerta para valores altos (>5000)
-    - `checkSuspiciousAmount(BigDecimal)` - Rejeita valores suspeitos (>10000)
-    - `checkInstallmentsLimit(Integer)` - Valida limite de parcelas (máx 12)
-    - `calculateFraudRisk(BigDecimal)` - Calcula risco em percentual
+- **PaymentMethodValidator** (`service/PaymentMethodValidator.java`) - Lê anotações em tempo de execução e valida métodos/parcelas
+- **AntiFraudService** (`service/AntiFraudService.java`) - Implementa 3 regras: alerta (>R$ 5k), rejeita (>R$ 10k), valida parcelas (máx 12)
 
 ---
 
-## 3. Arquivos Refatorados
+## Arquivos Refatorados
 
 ### 3.1 `PaymentService.java`
 
@@ -188,7 +139,7 @@ Implementei encerramento gracioso:
 
 ---
 
-## 4. Comparação: Antes vs Depois
+## Comparação: Antes vs Depois
 
 Aqui está o resumo das mudanças que implementei:
 
@@ -205,9 +156,9 @@ Aqui está o resumo das mudanças que implementei:
 
 ---
 
-## 5. Validações Implementadas
+## Validações Implementadas
 
-### 5.1 Métodos de Pagamento Suportados
+### Métodos de Pagamento
 
 Implementei suporte para quatro métodos de pagamento:
 
@@ -218,17 +169,17 @@ Implementei suporte para quatro métodos de pagamento:
 ✓ BOLETO    - Boleto Bancário (1 parcela)
 ```
 
-### 5.2 Regras Anti-fraude
+### Regras Anti-fraude
 
 Criei três regras de validação anti-fraude:
 
 ```
-1. HighAmount (>5000)      → Alerta (permite com log)
-2. SuspiciousAmount (>10000) → Rejeita
+1. HighAmount (>R$ 5k)      → Alerta (permite com log)
+2. SuspiciousAmount (>R$ 10k) → Rejeita
 3. InstallmentsLimit (>12)   → Rejeita
 ```
 
-### 5.3 Exemplo de Fluxo com Validações
+### Fluxo de Pagamento
 
 Este é o fluxo que implementei para criar um pagamento:
 
@@ -236,7 +187,7 @@ Este é o fluxo que implementei para criar um pagamento:
 POST /fiadopay/gateway/payments
 ├─ Validar método: CARD ✓
 ├─ Validar parcelas: 12 ✓ (máx para CARD)
-├─ Validar anti-fraude: 2500.00 ✓ (baixo risco)
+├─ Validar anti-fraude: R$ 250,50 ✓ (baixo risco)
 ├─ Criar pagamento
 ├─ Submeter para processamento (ExecutorService)
 │  └─ Aguardar delay (ScheduledExecutorService)
@@ -248,7 +199,7 @@ POST /fiadopay/gateway/payments
 
 ---
 
-## 6. Melhorias de Performance
+## Melhorias de Performance
 
 ### 6.1 Threads Não-Bloqueantes
 
@@ -274,7 +225,7 @@ Implementei backoff exponencial para retries de webhook:
 
 ---
 
-## 7. Contrato de API Mantido
+## Contrato de API Mantido
 
 Mantive todas as rotas funcionando sem alterações no contrato:
 
@@ -304,7 +255,7 @@ POST /fiadopay/refunds
 
 ---
 
-## 8. Exemplo de Uso
+## Exemplo de Uso
 
 ### Criar Pagamento com Validações
 
@@ -361,26 +312,22 @@ curl -X POST http://localhost:8080/fiadopay/gateway/payments \
 
 ---
 
-## 9. Logs Estruturados
+## Conclusão
 
-Adicionei logs estruturados em pontos críticos da aplicação:
+Implementamos com sucesso a refatoração do FiadoPay com:
+- 3 anotações customizadas
+- 2 serviços com reflexão
+- 3 pools de threads profissionais
+- 34 testes automatizados
+- Contrato de API mantido
+- Melhor escalabilidade e manutenibilidade
 
-```
-INFO: Pagamento criado: pay_abc12345
-INFO: Pagamento processado: pay_abc12345 - Status: APPROVED
-INFO: Webhook criado para entrega: 1
-INFO: Webhook entregue: 1 - Status: 200 - Tentativa: 1
-INFO: Agendando retry para webhook 2 em 2000ms
-WARNING: Método de pagamento não suportado: INVALID
-WARNING: Pagamento rejeitado por anti-fraude: 15000.00
-SEVERE: Erro ao processar pagamento: Connection refused
-```
+**Data:** 18 de Novembro de 2025
 
 ---
 
 ## 10. Tecnologias Utilizadas
 
-Utilizei as seguintes tecnologias na refatoração:
 
 | Componente | Tecnologia |
 |-----------|-----------|
